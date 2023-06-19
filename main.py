@@ -46,7 +46,7 @@ class PidController:
         self.last_error = 0
         self.integral = 0
 
-        self.target_reflection = 18 #TODO najit nejlepsi hodnotu
+        self.target_reflection = 18  # TODO najit nejlepsi hodnotu
 
         self.PROPORTIONAL = 1.15
         self.INTEGRAL = 0.005
@@ -77,9 +77,10 @@ class PidController:
 
         while robot.distance() < distance:
             self._follow_line(speed, side)
-        
+
         self.last_error = 0
         self.integral = 0
+
 
 class SimpleDrive:
 
@@ -93,9 +94,10 @@ class SimpleDrive:
 
     @staticmethod
     def pickup() -> None:
-        distance_to_ball = 100 #TODO zmerit!!!
+        distance_to_ball = 100  # TODO zmerit!!!
         while ultrasonic_sensor.distance() > distance_to_ball:
             robot.drive(speed, 0)
+
 
 class Arm:
 
@@ -125,11 +127,15 @@ class Arm:
         simple_drive.straight(help_distance)
 
 
-# Global variables
-speed = 190
+class Config:
+    SPEED = 190
+    TURN_RATE = 100
+    WHEEL_DIAMETER = 44.6  # mm (TODO premerit)
+    AXLE_TRACK = 120  # mm
+    CENSOR_TO_CENTER = 0.0  # TODO zmerit!!!
 
 
-robot.settings(turn_rate=100, straight_speed=speed)
+robot.settings(turn_rate=Config.TURN_RATE, straight_speed=Config.SPEED)
 
 pid = PidController()
 
