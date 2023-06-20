@@ -1,32 +1,31 @@
 #!/usr/bin/env pybricks-micropython
 
-# from pybricks.ev3devices import ColorSensor, Motor, UltrasonicSensor, TouchSensor
-# from pybricks.hubs import EV3Brick
-# from pybricks.parameters import Port, Color, Direction, Stop
-# from pybricks.robotics import DriveBase
-# from pybricks.tools import wait
+from pybricks.ev3devices import ColorSensor, Motor, UltrasonicSensor, TouchSensor
+from pybricks.hubs import EV3Brick
+from pybricks.parameters import Port, Color, Direction, Stop
+from pybricks.robotics import DriveBase
+from pybricks.tools import wait
 
 import math
 from time import sleep
-from typing import Union
 import threading
 
 
 # EV3
-# ev3 = EV3Brick()
+ev3 = EV3Brick()
 
-# # Motors
-# left_motor = Motor(Port.A,  positive_direction=Direction.COUNTERCLOCKWISE)
-# right_motor = Motor(Port.B, positive_direction=Direction.COUNTERCLOCKWISE)
-# loader_motor = Motor(Port.C)
+# Motors
+left_motor = Motor(Port.B, positive_direction=Direction.CLOCKWISE)
+right_motor = Motor(Port.C, positive_direction=Direction.CLOCKWISE)
+loader_motor = Motor(Port.A)
 
-# # Sensors
-# color_sensor = ColorSensor(Port.S4)
-# ultrasonic_sensor = UltrasonicSensor()
-# touch_sensor = TouchSensor()
+# Sensors
+color_sensor = ColorSensor(Port.S1)
+ultrasonic_sensor = UltrasonicSensor(Port.S4)
+touch_sensor = TouchSensor(Port.S3)
 
-# # Drive Base
-# robot = DriveBase(left_motor, right_motor, wheel_diameter=55.5, axle_track=168)
+# Drive Base
+robot = DriveBase(left_motor, right_motor, wheel_diameter=55.5, axle_track=168)
 
 
 class Helper():
@@ -39,7 +38,7 @@ class Helper():
     # def angle(a: int | float, b: int | float) -> float:
     #     return math.degrees(math.atan(a / b))
 
-    def calculate_hypotenuse_length(self, side: Union[int, float], angle: int) -> float:
+    def calculate_hypotenuse_length(self, side: int, angle: int) -> float:
         return side / math.cos(math.radians(angle))
 
 
@@ -49,7 +48,7 @@ class PidController:
         self.last_error = 0
         self.integral = 0
 
-        self.target_reflection = 18  # TODO najit nejlepsi hodnotu
+        self.target_reflection = 40  # TODO najit nejlepsi hodnotu
 
         self.PROPORTIONAL = 1.15
         self.INTEGRAL = 0.005
@@ -68,14 +67,14 @@ class PidController:
 
         self.last_error = error
 
-        if side == "l":
+        if side == "r":
             robot.drive(speed, p_fix + i_fix + d_fix)
 
-        if side == "r":
+        if side == "l":
             robot.drive(speed, -p_fix - i_fix - d_fix)
 
     # Follows a black line on given side with distance
-    def run_distance(self, speed: int, distance: Union[int, float], side: str = "l") -> None:
+    def run_distance(self, speed: int, distance: int, side: str = "l") -> None:
         robot.reset()
 
         while robot.distance() < distance:
@@ -84,7 +83,7 @@ class PidController:
         self.last_error = 0
         self.integral = 0
 
-    def run_ultrasonic(self, speed: int, distance: Union[int, float], side: str = "l") -> None:
+    def run_ultrasonic(self, speed: int, distance: int, side: str = "l") -> None:
         robot.reset()
 
         while ultrasonic_sensor.distance() > distance:
@@ -97,7 +96,7 @@ class PidController:
 class SimpleDrive:
 
     @staticmethod
-    def pickup_setup(side: Union[int, float], angle: int) -> None:
+    def pickup_setup(side: int, angle: int) -> None:
         distance = helper.calculate_hypotenuse_length(side, angle)
 
         robot.turn(angle)
@@ -168,10 +167,10 @@ class Robot:
             self.grid[ball_position[0]][ball_position[1]] = 1
 
     def navigate_to_ball(self, ball_position):
-        print(f"Navigating to ball at position: {ball_position}")
+        print("Navigating to ball at position: %s".format(ball_position))
 
     def collect_ball(self, ball_position):
-        print(f"Collecting ball at position: {ball_position}")
+        print("Collecting ball at position: %s".format(ball_position))
         self.grid[ball_position[0]][ball_position[1]] = 0
 
     def explore_playing_field(self):
@@ -198,7 +197,7 @@ map = [
 
 balls = 0
 
-def main(index: int) -> None:
+def main() -> None:
     arm.initialize()
     pid.run_ultrasonic(Config.SPEED, 100)
     simple_drive.pickup_setup(100, 45)
@@ -212,5 +211,5 @@ def return_to_base(index: int) -> None:
 while not touch_sensor.pressed():
     continue
 else:
-    main()
+    pid.run_ultrasonic(Config.SPEED / 3, 100, side="l")
 
